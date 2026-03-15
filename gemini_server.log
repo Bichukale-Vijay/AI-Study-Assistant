@@ -1,0 +1,34 @@
+2026-03-14 19:38:49,432 | INFO | __main__ | CORS enabled for all origins
+2026-03-14 19:38:49,432 | INFO | __main__ | === Advanced Gemini AI Server Started ===
+2026-03-14 19:38:49,433 | INFO | __main__ | Features loaded: rate-limit, history, caching, stats, retry, logging
+2026-03-14 19:38:49,433 | INFO | __main__ | Send UI whenever ready – I will integrate streaming, vision, voice, RAG, auth, etc.
+2026-03-14 19:38:49,486 | WARNING | werkzeug |  * Debugger is active!
+2026-03-14 19:38:49,491 | INFO | werkzeug |  * Debugger PIN: 918-268-249
+2026-03-14 19:41:24,216 | INFO | werkzeug | 127.0.0.1 - - [14/Mar/2026 19:41:24] "GET / HTTP/1.1" 200 -
+2026-03-14 19:42:22,901 | INFO | google_genai.models | AFC is enabled with max remote calls: 10.
+2026-03-14 19:42:30,045 | INFO | httpx | HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2026-03-14 19:42:30,050 | INFO | __main__ | Session: c17bec26-5a99-4ee9-9a44-a206e80bc9e7 | Time: 7.15s | Question length: 12
+2026-03-14 19:42:30,063 | INFO | werkzeug | 127.0.0.1 - - [14/Mar/2026 19:42:30] "POST /ask HTTP/1.1" 200 -
+2026-03-14 19:43:31,221 | INFO | __main__ | CORS enabled for all origins
+2026-03-14 19:43:31,221 | INFO | __main__ | === Advanced Gemini AI Server Started ===
+2026-03-14 19:43:31,222 | INFO | __main__ | Features loaded: rate-limit, history, caching, stats, retry, logging
+2026-03-14 19:43:31,222 | INFO | __main__ | Send UI whenever ready – I will integrate streaming, vision, voice, RAG, auth, etc.
+2026-03-14 19:43:31,291 | INFO | werkzeug | [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.14:5000
+2026-03-14 19:43:31,292 | INFO | werkzeug | [33mPress CTRL+C to quit[0m
+2026-03-14 19:43:31,296 | INFO | werkzeug |  * Restarting with stat
+2026-03-14 19:43:37,337 | INFO | __main__ | CORS enabled for all origins
+2026-03-14 19:43:37,338 | INFO | __main__ | === Advanced Gemini AI Server Started ===
+2026-03-14 19:43:37,339 | INFO | __main__ | Features loaded: rate-limit, history, caching, stats, retry, logging
+2026-03-14 19:43:37,339 | INFO | __main__ | Send UI whenever ready – I will integrate streaming, vision, voice, RAG, auth, etc.
+2026-03-14 19:43:37,398 | WARNING | werkzeug |  * Debugger is active!
+2026-03-14 19:43:37,406 | INFO | werkzeug |  * Debugger PIN: 918-268-249
+2026-03-14 19:43:41,143 | INFO | werkzeug | 127.0.0.1 - - [14/Mar/2026 19:43:41] "GET / HTTP/1.1" 200 -
+2026-03-14 19:43:50,691 | INFO | google_genai.models | AFC is enabled with max remote calls: 10.
+2026-03-14 19:44:00,569 | INFO | httpx | HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2026-03-14 19:44:00,580 | INFO | __main__ | Session: c17bec26-5a99-4ee9-9a44-a206e80bc9e7 | Time: 9.89s | Question length: 10
+2026-03-14 19:44:00,584 | INFO | werkzeug | 127.0.0.1 - - [14/Mar/2026 19:44:00] "POST /ask HTTP/1.1" 200 -
+2026-03-14 19:46:34,431 | INFO | werkzeug |  * Detected change in 'c:\\Users\\HP\\OneDrive\\Documents\\Projects\\AI Study Assistant\\app.py', reloading
+2026-03-14 19:46:34,753 | INFO | werkzeug |  * Restarting with stat
