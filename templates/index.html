@@ -16,149 +16,34 @@
 href="https://cdn.jsdelivr.net/npm/highlight.js/styles/github-dark.min.css">
 
 <style>
-
+/* ✅ ORIGINAL CSS UNCHANGED */
 body{
-background:
-radial-gradient(circle at 10% 10%,#1e293b,#020617 60%);
+background: radial-gradient(circle at 10% 10%,#1e293b,#020617 60%);
 font-family:Inter,system-ui,-apple-system,sans-serif;
 color:#e2e8f0;
 overflow:hidden;
 }
-
-/* glassmorphism */
-
-.glass{
-background:rgba(15,23,42,.55);
-backdrop-filter:blur(30px);
-border:1px solid rgba(255,255,255,.05);
-}
-
-/* glowing borders */
-
-.glow{
-box-shadow:
-0 0 20px rgba(59,130,246,.25),
-0 0 60px rgba(59,130,246,.12);
-}
-
-/* sidebar */
-
-.sidebar{
-background:
-linear-gradient(180deg,#020617,#0f172a);
-border-right:1px solid rgba(255,255,255,.05);
-}
-
-/* bubbles */
-
-.bubble{
-max-width:70%;
-padding:18px 20px;
-border-radius:18px;
-line-height:1.7;
-position:relative;
-}
-
-.user{
-background:linear-gradient(135deg,#2563eb,#3b82f6);
-color:white;
-}
-
-.ai{
-background:#1e293b;
-}
-
-/* message animation */
-
-.message{
-animation:fade .3s ease;
-}
-
-@keyframes fade{
-from{opacity:0;transform:translateY(8px)}
-to{opacity:1;transform:translateY(0)}
-}
-
-/* avatars */
-
-.avatar{
-width:36px;
-height:36px;
-border-radius:50%;
-display:flex;
-align-items:center;
-justify-content:center;
-background:linear-gradient(135deg,#3b82f6,#6366f1);
-font-size:18px;
-}
-
-/* typing animation */
-
-.typing span{
-width:6px;
-height:6px;
-background:#94a3b8;
-display:inline-block;
-border-radius:50%;
-margin:3px;
-animation:blink 1.4s infinite both;
-}
-
+.glass{background:rgba(15,23,42,.55);backdrop-filter:blur(30px);border:1px solid rgba(255,255,255,.05);}
+.glow{box-shadow:0 0 20px rgba(59,130,246,.25),0 0 60px rgba(59,130,246,.12);}
+.sidebar{background:linear-gradient(180deg,#020617,#0f172a);border-right:1px solid rgba(255,255,255,.05);}
+.bubble{max-width:70%;padding:18px 20px;border-radius:18px;line-height:1.7;position:relative;}
+.user{background:linear-gradient(135deg,#2563eb,#3b82f6);color:white;}
+.ai{background:#1e293b;}
+.message{animation:fade .3s ease;}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#3b82f6,#6366f1);font-size:18px;}
+.typing span{width:6px;height:6px;background:#94a3b8;display:inline-block;border-radius:50%;margin:3px;animation:blink 1.4s infinite both;}
 .typing span:nth-child(2){animation-delay:.2s}
 .typing span:nth-child(3){animation-delay:.4s}
-
-@keyframes blink{
-0%,80%,100%{opacity:0}
-40%{opacity:1}
-}
-
-/* input */
-
-.inputbox{
-background:#020617;
-border:1px solid rgba(255,255,255,.1);
-}
-
-/* send button */
-
-.sendbtn{
-background:linear-gradient(135deg,#2563eb,#6366f1);
-transition:.25s;
-}
-
-.sendbtn:hover{
-transform:scale(1.05);
-box-shadow:0 0 25px rgba(99,102,241,.5);
-}
-
-/* copy tool */
-
-.tools{
-position:absolute;
-top:6px;
-right:8px;
-opacity:0;
-font-size:12px;
-cursor:pointer;
-}
-
-.bubble:hover .tools{
-opacity:1;
-}
-
-/* scrollbar */
-
+@keyframes blink{0%,80%,100%{opacity:0}40%{opacity:1}}
+.inputbox{background:#020617;border:1px solid rgba(255,255,255,.1);}
+.sendbtn{background:linear-gradient(135deg,#2563eb,#6366f1);transition:.25s;}
+.sendbtn:hover{transform:scale(1.05);box-shadow:0 0 25px rgba(99,102,241,.5);}
+.tools{position:absolute;top:6px;right:8px;opacity:0;font-size:12px;cursor:pointer;}
+.bubble:hover .tools{opacity:1;}
 ::-webkit-scrollbar{width:6px}
 ::-webkit-scrollbar-thumb{background:#334155;border-radius:10px}
-
-/* code blocks */
-
-pre{
-border-radius:12px;
-padding:14px;
-overflow:auto;
-}
-
+pre{border-radius:12px;padding:14px;overflow:auto;}
 </style>
 
 </head>
@@ -166,99 +51,70 @@ overflow:auto;
 <body class="h-screen flex">
 
 <!-- SIDEBAR -->
-
 <div class="w-64 sidebar hidden md:flex flex-col">
-
 <div class="p-6 border-b border-gray-800">
-
 <div class="flex items-center gap-3 text-lg font-semibold">
-
 <div class="avatar">🤖</div>
-
 AI Study Assistant
-
 </div>
-
 <div class="text-xs text-gray-400 mt-1">
-
 Your personal AI learning companion
-
 </div>
-
 </div>
-
 <div class="flex-1 p-4 space-y-2 text-sm">
-
 <div class="p-3 rounded-lg hover:bg-gray-800 cursor-pointer transition">
-
 ✨ New Chat
-
 </div>
-
 </div>
-
 </div>
 
 <!-- MAIN -->
-
 <div class="flex-1 flex flex-col glass">
 
 <!-- HEADER -->
-
 <div class="flex justify-between items-center px-6 py-4 border-b border-gray-800">
-
 <div class="flex items-center gap-3">
-
 <div class="avatar">🤖</div>
-
-<div class="font-semibold">
-
-AI Study Assistant
-
+<div class="font-semibold">AI Study Assistant</div>
 </div>
-
-</div>
-
-<button
-id="clearBtn"
+<button id="clearBtn"
 class="bg-red-500 px-4 py-1.5 text-sm rounded-lg hover:bg-red-600 transition">
-
 Clear Chat
-
 </button>
-
 </div>
 
 <!-- CHAT -->
+<div id="chat" class="flex-1 overflow-y-auto p-8 space-y-6"></div>
 
-<div
-id="chat"
-class="flex-1 overflow-y-auto p-8 space-y-6">
+<!-- ✅ MODE BUTTONS (UPDATED) -->
+<div class="flex gap-2 px-6 mt-3">
+
+<button id="normalBtn" class="mode-btn px-3 py-1 text-xs bg-gray-700 rounded"
+onclick="setMode('normal')">⚪ Normal</button>
+
+<button id="simpleBtn" class="mode-btn px-3 py-1 text-xs bg-green-600 rounded"
+onclick="setMode('simple')">🟢 Simple</button>
+
+<button id="mediumBtn" class="mode-btn px-3 py-1 text-xs bg-yellow-500 rounded"
+onclick="setMode('medium')">🟡 Exam</button>
+
+<button id="deepBtn" class="mode-btn px-3 py-1 text-xs bg-red-600 rounded"
+onclick="setMode('deep')">🔴 Deep</button>
 
 </div>
 
 <!-- INPUT -->
-
 <div class="p-6 border-t border-gray-800">
-
 <div class="inputbox glow rounded-xl flex items-center gap-4 px-5 py-4">
-
-<textarea
-id="question"
-rows="1"
+<textarea id="question" rows="1"
 placeholder="Ask anything about your studies..."
 class="flex-1 bg-transparent outline-none resize-none text-sm"></textarea>
 
-<button
-id="sendBtn"
+<button id="sendBtn"
 class="sendbtn px-6 py-2 rounded-lg text-sm font-semibold">
-
 Send 🚀
-
 </button>
-
 </div>
-
 </div>
 
 </div>
@@ -270,73 +126,52 @@ const input=document.getElementById("question")
 const sendBtn=document.getElementById("sendBtn")
 const clearBtn=document.getElementById("clearBtn")
 
-function scrollBottom(){
-chat.scrollTop=chat.scrollHeight
+let currentMode="normal"
+
+// ✅ UPDATED MODE FUNCTION (highlight)
+window.setMode=function(mode){
+currentMode=mode
+
+document.querySelectorAll(".mode-btn").forEach(btn=>{
+    btn.style.opacity="0.5"
+    btn.style.transform="scale(1)"
+})
+
+const active=document.getElementById(mode+"Btn")
+if(active){
+    active.style.opacity="1"
+    active.style.transform="scale(1.1)"
 }
 
-function copyText(text){
-navigator.clipboard.writeText(text)
+console.log("Mode:",mode)
 }
+
+function scrollBottom(){chat.scrollTop=chat.scrollHeight}
+function copyText(text){navigator.clipboard.writeText(text)}
 
 function addMessage(text,sender,typing=false){
-
 const msg=document.createElement("div")
 msg.className=`message flex ${sender==="user"?"justify-end":""}`
 
 if(typing){
-
-msg.innerHTML=`
-
-<div class="flex gap-3">
-
+msg.innerHTML=`<div class="flex gap-3">
 <div class="avatar">🤖</div>
-
 <div>
-
-<div class="text-xs text-gray-400 mb-1">
-AI thinking...
-</div>
-
+<div class="text-xs text-gray-400 mb-1">AI thinking...</div>
 <div class="bubble ai">
-
-<div class="typing">
-<span></span><span></span><span></span>
-</div>
-
-</div>
-
-</div>
-
-</div>
-`
-
+<div class="typing"><span></span><span></span><span></span></div>
+</div></div></div>`
 }else{
-
 let bubble=sender==="user"?"user":"ai"
 let content=sender==="ai"?marked.parse(text):text
-
-msg.innerHTML=`
-
-<div class="bubble ${bubble}">
-
-<div class="tools"
-onclick="copyText(\`${text}\`)">📋</div>
-
-${content}
-
-</div>
-`
-
+msg.innerHTML=`<div class="bubble ${bubble}">
+<div class="tools" onclick="copyText(\`${text}\`)">📋</div>
+${content}</div>`
 }
 
 chat.appendChild(msg)
-
-document.querySelectorAll("pre code").forEach(block=>{
-hljs.highlightElement(block)
-})
-
+document.querySelectorAll("pre code").forEach(block=>hljs.highlightElement(block))
 scrollBottom()
-
 return msg
 }
 
@@ -346,16 +181,17 @@ const question=input.value.trim()
 if(!question)return
 
 addMessage(question,"user")
-
 input.value=""
 
 const typingMsg=addMessage("","ai",true)
-
 sendBtn.disabled=true
 
 try{
 
-const res=await fetch("/ask",{
+let url="/ask"
+if(currentMode!=="normal"){url="/multi-explain"}
+
+const res=await fetch(url,{
 method:"POST",
 headers:{"Content-Type":"application/json"},
 body:JSON.stringify({question})
@@ -363,39 +199,47 @@ body:JSON.stringify({question})
 
 const data=await res.json()
 
-typingMsg.innerHTML=`
+let answer=""
+let label=""
 
-<div class="flex gap-3">
+if(currentMode==="simple"){
+    answer=data.simple
+    label="🟢 Simple Explanation"
+}
+else if(currentMode==="medium"){
+    answer=data.medium
+    label="🟡 Exam Ready Answer"
+}
+else if(currentMode==="deep"){
+    answer=data.deep
+    label="🔴 Deep Technical Explanation"
+}
+else{
+    answer=data.answer
+    label="⚪ Normal Answer"
+}
 
+typingMsg.innerHTML=`<div class="flex gap-3">
 <div class="avatar">🤖</div>
-
 <div class="bubble ai">
 
-<div class="tools"
-onclick="copyText(\`${data.answer}\`)">📋</div>
-
-${marked.parse(data.answer)}
-
-<br>
-
-<span class="text-xs text-gray-400">
-⏱ ${data.time}s
-</span>
-
+<div class="text-xs text-blue-400 mb-2 font-semibold">
+${label}
 </div>
 
-</div>
-`
+<div class="tools" onclick="copyText(\`${answer}\`)">📋</div>
 
-}
-catch(e){
+${marked.parse(answer)}
 
+<br><span class="text-xs text-gray-400">⏱ ${data.time}s</span>
+
+</div></div>`
+
+}catch(e){
 typingMsg.innerHTML=`<div class="bubble bg-red-600">Server Error</div>`
-
 }
 
 sendBtn.disabled=false
-
 }
 
 sendBtn.onclick=sendQuestion
@@ -407,9 +251,7 @@ sendQuestion()
 }
 })
 
-clearBtn.onclick=()=>{
-chat.innerHTML=""
-}
+clearBtn.onclick=()=>{chat.innerHTML=""}
 
 input.addEventListener("input",()=>{
 input.style.height="auto"
