@@ -4,9 +4,12 @@ import time
 import os
 import logging
 import uuid
-import pyttsx3  # offline TTS
+import pyttsx3
 import json
 import re
+
+# ✅ NEW: SymPy for advanced solving
+from sympy import symbols, solve, sympify
 
 # existing
 from multi_level_ai import generate_multi_level_response
@@ -42,7 +45,7 @@ except Exception as e:
     logging.error(f"Failed to load demo QA file: {e}")
 
 # =========================================================
-# ✅ TEXT-TO-SPEECH (pyttsx3 offline)
+# ✅ TEXT-TO-SPEECH
 # =========================================================
 def generate_audio(text):
     try:
@@ -53,7 +56,7 @@ def generate_audio(text):
         engine = pyttsx3.init()
         engine.setProperty('rate', 180)
         engine.setProperty('volume', 1.0)
-        engine.save_to_file(text[:400], filename)  # short text for fast generation
+        engine.save_to_file(text[:400], filename)
         engine.runAndWait()
         engine.stop()
         return filename
@@ -75,31 +78,25 @@ def ask_ai(question):
             contents=[question]
         )
 
-        if hasattr(response, "text") and response.text:
-            return response.text.strip()
+        return response.text.strip() if response.text else "AI returned empty response."
 
-        return "AI returned empty response."
     except Exception as e:
         logging.error(f"AI Error: {e}")
         return f"AI Error: {str(e)}"
 
 # =========================================================
-# ✅ Demo QA keyword matching
+# ✅ Demo QA matching
 # =========================================================
 STOPWORDS = {
-    "the", "is", "a", "an", "of", "in", "on", "and", "or", "for", "to", "with", "as", "by", "at", "from"
+    "the","is","a","an","of","in","on","and","or",
+    "for","to","with","as","by","at","from"
 }
 
 def clean_and_split(text):
-    """Lowercase, remove non-alphanumerics, split into words, remove stopwords"""
     words = re.findall(r'\b\w+\b', text.lower())
     return [w for w in words if w not in STOPWORDS]
 
 def find_demo_answer(user_question, threshold=1):
-    """
-    Find the best matching demo answer based on keyword overlap.
-    threshold=1 means at least 1 keyword must match.
-    """
     user_keywords = set(clean_and_split(user_question))
     best_match = None
     max_overlap = 0
@@ -107,6 +104,7 @@ def find_demo_answer(user_question, threshold=1):
     for qa in demo_qa:
         demo_keywords = set(clean_and_split(qa.get("question", "")))
         overlap = len(user_keywords & demo_keywords)
+
         if overlap > max_overlap and overlap >= threshold:
             max_overlap = overlap
             best_match = {
@@ -118,7 +116,42 @@ def find_demo_answer(user_question, threshold=1):
     return best_match
 
 # =========================================================
-# ✅ Routes
+# ✅ WHITEBOARD SOLVER (UPGRADED WITH SYMPY)
+# =========================================================
+def solve_equation_steps(equation):
+    try:
+        x = symbols('x')
+
+        # Convert equation → standard form
+        eq = equation.replace("^", "**")  # support x^2 input
+        eq = eq.replace("=", "-(") + ")"
+
+        expr = sympify(eq)
+        solutions = solve(expr, x)
+
+        steps = []
+        steps.append(f"Given: {equation}")
+        steps.append("Convert to standard form:")
+        steps.append(f"{expr} = 0")
+        steps.append("Solve:")
+
+        if not solutions:
+            steps.append("No solution found")
+
+        for sol in solutions:
+            steps.append(f"x = {sol}")
+
+        return {
+            "steps": steps,
+            "solution": [str(s) for s in solutions]
+        }
+
+    except Exception as e:
+        logging.error(f"SymPy Solver Error: {e}")
+        return {"error": "Unable to solve this equation"}
+
+# =========================================================
+# ✅ ROUTES
 # =========================================================
 @app.route("/")
 def home():
@@ -139,7 +172,6 @@ def ask():
 
         start = time.perf_counter()
 
-        # ✅ Check demo QA first
         demo_answer = find_demo_answer(question)
         if demo_answer:
             answer = demo_answer.get("simple", "")
@@ -204,6 +236,41 @@ def multi_explain():
         logging.error(f"Multi Explain Error: {e}")
         return jsonify({"error": f"Server error: {str(e)}"}), 500
 
+# =========================================================
+# ✅ WHITEBOARD API (SYMPY POWERED)
+# =========================================================
+@app.route("/solve-whiteboard", methods=["POST"])
+def whiteboard_solver():
+    try:
+        data = request.get_json(silent=True)
+        if not data:
+            return jsonify({"error": "No data received"}), 400
+
+        question = str(data.get("question", "")).strip()
+
+        if question == "":
+            return jsonify({"error": "Question is required"}), 400
+
+        start = time.perf_counter()
+
+        result = solve_equation_steps(question)
+
+        end = time.perf_counter()
+
+        return jsonify({
+            "steps": result.get("steps", []),
+            "solution": result.get("solution"),
+            "error": result.get("error"),
+            "time": f"{end-start:.2f}"
+        })
+
+    except Exception as e:
+        logging.error(f"Whiteboard API Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+# =========================================================
+# ✅ AUDIO API
+# =========================================================
 @app.route("/generate-audio", methods=["POST"])
 def generate_audio_api():
     try:
@@ -217,9 +284,13 @@ def generate_audio_api():
 
         audio_file = generate_audio(text)
         return jsonify({"audio": audio_file})
+
     except Exception as e:
         logging.error(f"Audio API Error: {e}")
         return jsonify({"error": str(e)}), 500
 
+# =========================================================
+# ✅ RUN
+# =========================================================
 if __name__ == "__main__":
     app.run(debug=True)

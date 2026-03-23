@@ -76,6 +76,16 @@ audio{
 width:100%;
 margin-top:5px;
 }
+
+/* WHITEBOARD */
+.whiteboard-line{
+background:#0f172a;
+padding:12px;
+border-radius:8px;
+border-left:4px solid #3b82f6;
+font-family:monospace;
+font-size:18px;
+}
 </style>
 
 </head>
@@ -113,12 +123,28 @@ Clear Chat
 <!-- CHAT -->
 <div id="chat" class="flex-1 overflow-y-auto p-8 space-y-6"></div>
 
+<!-- WHITEBOARD -->
+<div id="whiteboard" class="hidden px-8 pb-4">
+<div class="glass p-5 rounded-xl mt-4">
+<div class="text-sm text-blue-400 mb-3 font-semibold">
+🧑‍🏫 Whiteboard Solver (Step-by-Step)
+</div>
+<div id="boardSteps" class="space-y-3"></div>
+</div>
+</div>
+
 <!-- MODES -->
 <div class="flex gap-2 px-6 mt-3">
 <button id="normalBtn" class="mode-btn px-3 py-1 text-xs bg-gray-700 rounded" onclick="setMode('normal')">⚪ Normal</button>
 <button id="simpleBtn" class="mode-btn px-3 py-1 text-xs bg-green-600 rounded" onclick="setMode('simple')">🟢 Simple</button>
 <button id="mediumBtn" class="mode-btn px-3 py-1 text-xs bg-yellow-500 rounded" onclick="setMode('medium')">🟡 Exam</button>
 <button id="deepBtn" class="mode-btn px-3 py-1 text-xs bg-red-600 rounded" onclick="setMode('deep')">🔴 Deep</button>
+
+<!-- WHITEBOARD BUTTON -->
+<button class="px-3 py-1 text-xs bg-blue-600 rounded hover:bg-blue-700"
+onclick="solveWhiteboard()">
+🧠 Whiteboard Solve
+</button>
 </div>
 
 <!-- INPUT -->
@@ -188,6 +214,8 @@ scrollBottom()
 return msg
 }
 
+/* ================= NORMAL CHAT ================= */
+
 async function sendQuestion(){
 
 const question=input.value.trim()
@@ -244,13 +272,6 @@ ${label}
 
 ${marked.parse(answer)}
 
-<button onclick="generateAudio(this, \`${answer}\`)" 
-class="mt-3 px-3 py-1 text-xs bg-purple-600 rounded hover:bg-purple-700">
-🔊 Generate Voice
-</button>
-
-<div class="audio-box mt-2"></div>
-
 <br><span class="text-xs text-gray-400">⏱ ${data.time}s</span>
 
 </div></div>`
@@ -262,34 +283,52 @@ typingMsg.innerHTML=`<div class="bubble bg-red-600">Server Error</div>`
 sendBtn.disabled=false
 }
 
-async function generateAudio(btn, text){
+/* ================= WHITEBOARD SOLVER ================= */
 
-btn.innerText="Generating..."
-btn.disabled=true
+async function solveWhiteboard(){
+
+const question=input.value.trim()
+if(!question)return
+
+document.getElementById("whiteboard").classList.remove("hidden")
+const board=document.getElementById("boardSteps")
+
+board.innerHTML="<div class='text-gray-400'>Solving...</div>"
 
 try{
 
-const res=await fetch("/generate-audio",{
+const res = await fetch("/solve-whiteboard",{
 method:"POST",
 headers:{"Content-Type":"application/json"},
-body:JSON.stringify({text})
+body:JSON.stringify({question})
 })
 
-const data=await res.json()
+const data = await res.json()
 
-if(data.audio){
-btn.style.display="none"
-const box=btn.nextElementSibling
-box.innerHTML=`
-<div class="text-xs text-purple-400 mb-1">🔊 Voice Explanation</div>
-<audio controls autoplay src="/${data.audio}"></audio>
-`
-}else{
-btn.innerText="Failed ❌"
+board.innerHTML=""
+
+if(data.error){
+board.innerHTML=`<div class="text-red-400">${data.error}</div>`
+return
 }
 
+// animate steps
+let i=0
+function draw(){
+if(i < data.steps.length){
+const div=document.createElement("div")
+div.className="whiteboard-line"
+div.innerText=data.steps[i]
+board.appendChild(div)
+i++
+setTimeout(draw,700)
+}
+}
+
+draw()
+
 }catch(e){
-btn.innerText="Error ❌"
+board.innerHTML="<div class='text-red-400'>Server Error</div>"
 }
 
 }
