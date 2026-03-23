@@ -1,19 +1,17 @@
 from flask import Flask, request, jsonify, render_template
-from google import genai
+import openai
 import time
 import os
 import logging
 import uuid
-import pyttsx3  # offline TTS
-import json
-import re
+import pyttsx3  # offline TTS replacement
 
 # existing
 from multi_level_ai import generate_multi_level_response
 
 app = Flask(__name__)
 
-# Ensure folders exist
+# Ensure folder exists
 os.makedirs("static/audio", exist_ok=True)
 
 # Logging
@@ -22,47 +20,37 @@ logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(message)s"
 )
 
-# API Key
-API_KEY = os.getenv("GEMINI_API_KEY", "YOUR_GEMINI_KEY_HERE")
-
-# AI client
-client = genai.Client(api_key=API_KEY)
+# OpenAI API Key
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+openai.api_key = OPENAI_API_KEY
 
 # =========================================================
-# ✅ Load demo QA file
-# =========================================================
-DEMO_FILE = "demo_qa.json"
-demo_qa = []
-
-try:
-    with open(DEMO_FILE, "r", encoding="utf-8") as f:
-        demo_qa = json.load(f)
-    logging.info(f"Loaded {len(demo_qa)} demo questions from {DEMO_FILE}.")
-except Exception as e:
-    logging.error(f"Failed to load demo QA file: {e}")
-
-# =========================================================
-# ✅ TEXT-TO-SPEECH (pyttsx3 offline)
+# ✅ TEXT-TO-SPEECH (pyttsx3 offline, per-request engine)
 # =========================================================
 def generate_audio(text):
     try:
         if not text:
             return None
 
+        os.makedirs("static/audio", exist_ok=True)
         filename = f"static/audio/{uuid.uuid4()}.mp3"
+
+        # Use a temporary pyttsx3 engine per request
         engine = pyttsx3.init()
         engine.setProperty('rate', 180)
         engine.setProperty('volume', 1.0)
-        engine.save_to_file(text[:400], filename)  # short text for fast generation
+        engine.save_to_file(text[:400], filename)  # short text for faster generation
         engine.runAndWait()
         engine.stop()
+
         return filename
+
     except Exception as e:
         logging.error(f"TTS Error: {e}")
         return None
 
 # =========================================================
-# ✅ AI function
+# ✅ AI function using OpenAI
 # =========================================================
 def ask_ai(question):
     try:
@@ -70,60 +58,29 @@ def ask_ai(question):
         if not question:
             return "Please enter a valid question."
 
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=[question]
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": question}],
+            max_tokens=500,
+            temperature=0.7
         )
 
-        if hasattr(response, "text") and response.text:
-            return response.text.strip()
+        if response and response.choices:
+            return response.choices[0].message['content'].strip()
 
         return "AI returned empty response."
+
     except Exception as e:
         logging.error(f"AI Error: {e}")
         return f"AI Error: {str(e)}"
 
-# =========================================================
-# ✅ Demo QA keyword matching
-# =========================================================
-STOPWORDS = {
-    "the", "is", "a", "an", "of", "in", "on", "and", "or", "for", "to", "with", "as", "by", "at", "from"
-}
-
-def clean_and_split(text):
-    """Lowercase, remove non-alphanumerics, split into words, remove stopwords"""
-    words = re.findall(r'\b\w+\b', text.lower())
-    return [w for w in words if w not in STOPWORDS]
-
-def find_demo_answer(user_question, threshold=1):
-    """
-    Find the best matching demo answer based on keyword overlap.
-    threshold=1 means at least 1 keyword must match.
-    """
-    user_keywords = set(clean_and_split(user_question))
-    best_match = None
-    max_overlap = 0
-
-    for qa in demo_qa:
-        demo_keywords = set(clean_and_split(qa.get("question", "")))
-        overlap = len(user_keywords & demo_keywords)
-        if overlap > max_overlap and overlap >= threshold:
-            max_overlap = overlap
-            best_match = {
-                "simple": qa.get("simple", ""),
-                "medium": qa.get("medium", ""),
-                "deep": qa.get("deep", "")
-            }
-
-    return best_match
-
-# =========================================================
-# ✅ Routes
-# =========================================================
 @app.route("/")
 def home():
     return render_template("index.html")
 
+# =========================================================
+# ✅ ASK API (NOW WITH OPTIONAL AUDIO)
+# =========================================================
 @app.route("/ask", methods=["POST"])
 def ask():
     try:
@@ -138,13 +95,7 @@ def ask():
             return jsonify({"answer": "Please enter a question", "time": "0.00"})
 
         start = time.perf_counter()
-
-        # ✅ Check demo QA first
-        demo_answer = find_demo_answer(question)
-        if demo_answer:
-            answer = demo_answer.get("simple", "")
-        else:
-            answer = ask_ai(question)
+        answer = ask_ai(question)
 
         audio_file = generate_audio(answer) if enable_audio else None
         end = time.perf_counter()
@@ -152,14 +103,16 @@ def ask():
         return jsonify({
             "answer": answer,
             "audio": audio_file,
-            "time": f"{end-start:.2f}",
-            "source": "demo" if demo_answer else "api"
+            "time": f"{end-start:.2f}"
         })
 
     except Exception as e:
         logging.error(f"/ask error: {e}")
         return jsonify({"answer": f"Server error: {str(e)}", "time": "0.00"})
 
+# =========================================================
+# ✅ MULTI-LEVEL (NOW WITH AUDIO OPTION)
+# =========================================================
 @app.route("/multi-explain", methods=["POST"])
 def multi_explain():
     try:
@@ -174,12 +127,7 @@ def multi_explain():
             return jsonify({"error": "Question is required"}), 400
 
         start = time.perf_counter()
-
-        demo_answer = find_demo_answer(question)
-        if demo_answer:
-            responses = demo_answer
-        else:
-            responses = generate_multi_level_response(ask_ai, question)
+        responses = generate_multi_level_response(ask_ai, question)
 
         audio_data = {}
         if enable_audio:
@@ -190,20 +138,21 @@ def multi_explain():
             }
 
         end = time.perf_counter()
-
         return jsonify({
             "simple": responses.get("simple", ""),
             "medium": responses.get("medium", ""),
             "deep": responses.get("deep", ""),
             **audio_data,
-            "time": f"{end-start:.2f}",
-            "source": "demo" if demo_answer else "api"
+            "time": f"{end-start:.2f}"
         })
 
     except Exception as e:
         logging.error(f"Multi Explain Error: {e}")
         return jsonify({"error": f"Server error: {str(e)}"}), 500
 
+# =========================================================
+# ✅ GENERATE AUDIO ON CLICK
+# =========================================================
 @app.route("/generate-audio", methods=["POST"])
 def generate_audio_api():
     try:
@@ -217,6 +166,7 @@ def generate_audio_api():
 
         audio_file = generate_audio(text)
         return jsonify({"audio": audio_file})
+
     except Exception as e:
         logging.error(f"Audio API Error: {e}")
         return jsonify({"error": str(e)}), 500
