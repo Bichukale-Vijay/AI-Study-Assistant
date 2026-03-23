@@ -72,12 +72,8 @@ margin:3px;animation:blink 1.4s infinite both;
 
 pre{border-radius:12px;padding:14px;overflow:auto;}
 
-audio{
-width:100%;
-margin-top:5px;
-}
+audio{width:100%;margin-top:8px;}
 
-/* WHITEBOARD */
 .whiteboard-line{
 background:#0f172a;
 padding:12px;
@@ -92,7 +88,6 @@ font-size:18px;
 
 <body class="h-screen flex">
 
-<!-- SIDEBAR -->
 <div class="w-64 sidebar hidden md:flex flex-col">
 <div class="p-6 border-b border-gray-800">
 <div class="flex items-center gap-3 text-lg font-semibold">
@@ -105,10 +100,8 @@ Your personal AI learning companion
 </div>
 </div>
 
-<!-- MAIN -->
 <div class="flex-1 flex flex-col glass min-h-0">
 
-<!-- HEADER -->
 <div class="flex justify-between items-center px-6 py-4 border-b border-gray-800">
 <div class="flex items-center gap-3">
 <div class="avatar">🤖</div>
@@ -120,10 +113,8 @@ Clear Chat
 </button>
 </div>
 
-<!-- CHAT -->
 <div id="chat" class="flex-1 overflow-y-auto p-8 space-y-6"></div>
 
-<!-- WHITEBOARD -->
 <div id="whiteboard" class="hidden px-8 pb-4">
 <div class="glass p-5 rounded-xl mt-4">
 <div class="text-sm text-blue-400 mb-3 font-semibold">
@@ -133,21 +124,22 @@ Clear Chat
 </div>
 </div>
 
-<!-- MODES -->
-<div class="flex gap-2 px-6 mt-3">
+<!-- ✅ MODES + AUDIO -->
+<div class="flex gap-2 px-6 mt-3 items-center flex-wrap">
 <button id="normalBtn" class="mode-btn px-3 py-1 text-xs bg-gray-700 rounded" onclick="setMode('normal')">⚪ Normal</button>
 <button id="simpleBtn" class="mode-btn px-3 py-1 text-xs bg-green-600 rounded" onclick="setMode('simple')">🟢 Simple</button>
 <button id="mediumBtn" class="mode-btn px-3 py-1 text-xs bg-yellow-500 rounded" onclick="setMode('medium')">🟡 Exam</button>
 <button id="deepBtn" class="mode-btn px-3 py-1 text-xs bg-red-600 rounded" onclick="setMode('deep')">🔴 Deep</button>
 
-<!-- WHITEBOARD BUTTON -->
 <button class="px-3 py-1 text-xs bg-blue-600 rounded hover:bg-blue-700"
-onclick="solveWhiteboard()">
-🧠 Whiteboard Solve
-</button>
+onclick="solveWhiteboard()">🧠 Whiteboard Solve</button>
+
+<label class="flex items-center gap-2 text-xs ml-4 cursor-pointer">
+<input type="checkbox" id="audioToggle" class="accent-blue-500">
+🔊 Audio
+</label>
 </div>
 
-<!-- INPUT -->
 <div class="p-6 border-t border-gray-800">
 <div class="inputbox glow rounded-xl flex items-center gap-4 px-5 py-4">
 <textarea id="question" rows="1"
@@ -214,7 +206,7 @@ scrollBottom()
 return msg
 }
 
-/* ================= NORMAL CHAT ================= */
+/* ✅ UPDATED WITH AUDIO */
 
 async function sendQuestion(){
 
@@ -232,32 +224,39 @@ try{
 let url="/ask"
 if(currentMode!=="normal"){url="/multi-explain"}
 
+const enableAudio=document.getElementById("audioToggle").checked
+
 const res=await fetch(url,{
 method:"POST",
 headers:{"Content-Type":"application/json"},
-body:JSON.stringify({question})
+body:JSON.stringify({question,audio:enableAudio})
 })
 
 const data=await res.json()
 
 let answer=""
 let label=""
+let audioFile=null
 
 if(currentMode==="simple"){
 answer=data.simple
 label="🟢 Simple Explanation"
+audioFile=data.simple_audio
 }
 else if(currentMode==="medium"){
 answer=data.medium
 label="🟡 Exam Ready Answer"
+audioFile=data.medium_audio
 }
 else if(currentMode==="deep"){
 answer=data.deep
 label="🔴 Deep Technical Explanation"
+audioFile=data.deep_audio
 }
 else{
 answer=data.answer
 label="⚪ Normal Answer"
+audioFile=data.audio
 }
 
 typingMsg.innerHTML=`<div class="flex gap-3">
@@ -272,6 +271,11 @@ ${label}
 
 ${marked.parse(answer)}
 
+${audioFile ? `
+<audio controls autoplay>
+<source src="${audioFile}" type="audio/mpeg">
+</audio>` : ""}
+
 <br><span class="text-xs text-gray-400">⏱ ${data.time}s</span>
 
 </div></div>`
@@ -283,54 +287,47 @@ typingMsg.innerHTML=`<div class="bubble bg-red-600">Server Error</div>`
 sendBtn.disabled=false
 }
 
-/* ================= WHITEBOARD SOLVER ================= */
+/* WHITEBOARD SAME */
 
 async function solveWhiteboard(){
-
 const question=input.value.trim()
 if(!question)return
 
 document.getElementById("whiteboard").classList.remove("hidden")
 const board=document.getElementById("boardSteps")
 
-board.innerHTML="<div class='text-gray-400'>Solving...</div>"
+board.innerHTML="Solving..."
 
 try{
-
-const res = await fetch("/solve-whiteboard",{
+const res=await fetch("/solve-whiteboard",{
 method:"POST",
 headers:{"Content-Type":"application/json"},
 body:JSON.stringify({question})
 })
 
-const data = await res.json()
-
+const data=await res.json()
 board.innerHTML=""
 
 if(data.error){
-board.innerHTML=`<div class="text-red-400">${data.error}</div>`
+board.innerHTML=data.error
 return
 }
 
-// animate steps
 let i=0
 function draw(){
-if(i < data.steps.length){
+if(i<data.steps.length){
 const div=document.createElement("div")
 div.className="whiteboard-line"
 div.innerText=data.steps[i]
 board.appendChild(div)
 i++
 setTimeout(draw,700)
-}
-}
-
+}}
 draw()
 
 }catch(e){
-board.innerHTML="<div class='text-red-400'>Server Error</div>"
+board.innerHTML="Server Error"
 }
-
 }
 
 sendBtn.onclick=sendQuestion
