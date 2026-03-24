@@ -289,6 +289,13 @@ def generate_audio_api():
         logging.error(f"Audio API Error: {e}")
         return jsonify({"error": str(e)}), 500
 
+
+# =========================================================
+# ✅ ONLY ADDITION (NO OTHER CHANGE)
+# =========================================================
+from thinking_visualizer_plugin import init_thinking_visualizer
+init_thinking_visualizer(app)
+
 # =========================================================
 # ✅ RUN
 # =========================================================

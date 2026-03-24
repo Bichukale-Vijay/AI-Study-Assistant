@@ -2,353 +2,335 @@
 <html lang="en">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Study Assistant</title>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js/lib/common.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js/styles/github-dark.min.css">
 
-<title>AI Study Assistant</title>
+    <script>
+        (function () {
+            window.currentFlowData = null;
+            window.lastAnswerText = ""; 
+            const originalFetch = window.fetch;
+            window.fetch = async function (...args) {
+                const response = await originalFetch(...args);
+                try {
+                    const url = args[0];
+                    if (typeof url === "string" && (url.includes("/ask") || url.includes("/multi-explain"))) {
+                        const cloned = response.clone();
+                        const data = await cloned.json();
+                        window.currentFlowData = data.flow || null;
+                        
+                        // FIX: Explicitly store the content based on mode
+                        if (data.answer) window.lastAnswerText = data.answer;
+                        else if (data.simple) window.lastAnswerText = data.simple;
+                        else if (data.medium) window.lastAnswerText = data.medium;
+                        else if (data.deep) window.lastAnswerText = data.deep;
+                    }
+                } catch (e) { console.log("Visualizer Hook Error:", e); }
+                return response;
+            };
 
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/highlight.js/lib/common.min.js"></script>
+            // FIX: Improved Logic Detection
+            window.generateThinking = function() {
+                if (window.currentFlowData && window.currentFlowData.nodes) {
+                    return window.currentFlowData.nodes.map(n => n.label);
+                }
+                
+                const text = (window.lastAnswerText || "").toLowerCase();
+                
+                if (text.includes("```")) {
+                    return ["Syntax Check", "Logic Architecture", "Code Generation", "Code Review"];
+                }
+                if (text.includes("1.") || text.includes("step") || text.includes("firstly")) {
+                    return ["Task Decomposition", "Step Sequencing", "Process Flow", "Procedural Output"];
+                }
+                if (text.includes(" because ") || text.includes("therefore") || text.includes("reason")) {
+                    return ["Argument Analysis", "Logic Synthesis", "Deductive Reasoning", "Insight Extraction"];
+                }
+                
+                return ["Query Received", "Neural Mapping", "Semantic Search", "Final Response"];
+            };
+        })();
+    </script>
 
-<link rel="stylesheet"
-href="https://cdn.jsdelivr.net/npm/highlight.js/styles/github-dark.min.css">
+    <style>
+        body {
+            background: radial-gradient(circle at 10% 10%, #1e293b, #020617 60%);
+            font-family: Inter, system-ui, -apple-system, sans-serif;
+            color: #e2e8f0;
+            overflow: auto;
+        }
 
-<style>
-body{
-background: radial-gradient(circle at 10% 10%,#1e293b,#020617 60%);
-font-family:Inter,system-ui,-apple-system,sans-serif;
-color:#e2e8f0;
-overflow:auto;
-}
+        .glass { background: rgba(15, 23, 42, .55); backdrop-filter: blur(30px); border: 1px solid rgba(255, 255, 255, .05); }
+        .glow { box-shadow: 0 0 20px rgba(59, 130, 246, .25), 0 0 60px rgba(59, 130, 246, .12); }
+        .sidebar { background: linear-gradient(180deg, #020617, #0f172a); border-right: 1px solid rgba(255, 255, 255, .05); }
 
-.glass{background:rgba(15,23,42,.55);backdrop-filter:blur(30px);border:1px solid rgba(255,255,255,.05);}
-.glow{box-shadow:0 0 20px rgba(59,130,246,.25),0 0 60px rgba(59,130,246,.12);}
-.sidebar{background:linear-gradient(180deg,#020617,#0f172a);border-right:1px solid rgba(255,255,255,.05);}
+        .bubble {
+            max-width: 70%;
+            padding: 18px 20px;
+            border-radius: 18px;
+            line-height: 1.7;
+            position: relative;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
 
-.bubble{
-max-width:70%;
-padding:18px 20px;
-border-radius:18px;
-line-height:1.7;
-position:relative;
-word-wrap:break-word;
-overflow-wrap:break-word;
-}
+        .user { background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; }
+        .ai { background: #1e293b; }
 
-.user{background:linear-gradient(135deg,#2563eb,#3b82f6);color:white;}
-.ai{background:#1e293b;}
+        .message { animation: fade .3s ease; }
+        @keyframes fade { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: translateY(0) } }
 
-.message{animation:fade .3s ease;}
-@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        .avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            font-size: 18px;
+        }
 
-.avatar{
-width:36px;height:36px;border-radius:50%;
-display:flex;align-items:center;justify-content:center;
-background:linear-gradient(135deg,#3b82f6,#6366f1);
-font-size:18px;
-}
+        .typing span {
+            width: 6px; height: 6px; background: #94a3b8;
+            display: inline-block; border-radius: 50%;
+            margin: 3px; animation: blink 1.4s infinite both;
+        }
+        .typing span:nth-child(2) { animation-delay: .2s }
+        .typing span:nth-child(3) { animation-delay: .4s }
 
-.typing span{
-width:6px;height:6px;background:#94a3b8;
-display:inline-block;border-radius:50%;
-margin:3px;animation:blink 1.4s infinite both;
-}
-.typing span:nth-child(2){animation-delay:.2s}
-.typing span:nth-child(3){animation-delay:.4s}
+        @keyframes blink { 0%, 80%, 100% { opacity: 0 } 40% { opacity: 1 } }
 
-@keyframes blink{0%,80%,100%{opacity:0}40%{opacity:1}}
+        .inputbox { background: #020617; border: 1px solid rgba(255, 255, 255, .1); }
+        .sendbtn { background: linear-gradient(135deg, #2563eb, #6366f1); transition: .25s; }
+        .sendbtn:hover { transform: scale(1.05); box-shadow: 0 0 25px rgba(99, 102, 241, .5); }
 
-.inputbox{background:#020617;border:1px solid rgba(255,255,255,.1);}
-.sendbtn{background:linear-gradient(135deg,#2563eb,#6366f1);transition:.25s;}
-.sendbtn:hover{transform:scale(1.05);box-shadow:0 0 25px rgba(99,102,241,.5);}
+        .tools { position: absolute; top: 6px; right: 8px; opacity: 0; font-size: 12px; cursor: pointer; }
+        .bubble:hover .tools { opacity: 1; }
 
-.tools{position:absolute;top:6px;right:8px;opacity:0;font-size:12px;cursor:pointer;}
-.bubble:hover .tools{opacity:1;}
+        ::-webkit-scrollbar { width: 6px }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px }
 
-::-webkit-scrollbar{width:6px}
-::-webkit-scrollbar-thumb{background:#334155;border-radius:10px}
+        pre { border-radius: 12px; padding: 14px; overflow: auto; }
+        audio { width: 100%; margin-top: 8px; }
 
-pre{border-radius:12px;padding:14px;overflow:auto;}
+        .whiteboard-line {
+            background: #0f172a; padding: 12px; border-radius: 8px; border-left: 4px solid #3b82f6;
+            font-family: monospace; font-size: 18px;
+        }
 
-audio{width:100%;margin-top:8px;}
-
-.whiteboard-line{
-background:#0f172a;
-padding:12px;
-border-radius:8px;
-border-left:4px solid #3b82f6;
-font-family:monospace;
-font-size:18px;
-}
-</style>
-
+        .thinking-node { background: #1e293b; border: 1px solid #a855f7; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 600; color: #f4f4f5; }
+        .thinking-arrow { color: #a855f7; font-weight: bold; }
+    </style>
 </head>
 
 <body class="h-screen flex">
 
-<div class="w-64 sidebar hidden md:flex flex-col">
-<div class="p-6 border-b border-gray-800">
-<div class="flex items-center gap-3 text-lg font-semibold">
-<div class="avatar">🤖</div>
-AI Study Assistant
-</div>
-<div class="text-xs text-gray-400 mt-1">
-Your personal AI learning companion
-</div>
-</div>
-</div>
+    <div class="w-64 sidebar hidden md:flex flex-col">
+        <div class="p-6 border-b border-gray-800">
+            <div class="flex items-center gap-3 text-lg font-semibold">
+                <div class="avatar">🤖</div>
+                AI Study Assistant
+            </div>
+            <div class="text-xs text-gray-400 mt-1">Your personal AI learning companion</div>
+        </div>
+    </div>
 
-<div class="flex-1 flex flex-col glass min-h-0">
+    <div class="flex-1 flex flex-col glass min-h-0 relative">
 
-<div class="flex justify-between items-center px-6 py-4 border-b border-gray-800">
-<div class="flex items-center gap-3">
-<div class="avatar">🤖</div>
-<div class="font-semibold">AI Study Assistant</div>
-</div>
-<button id="clearBtn"
-class="bg-red-500 px-4 py-1.5 text-sm rounded-lg hover:bg-red-600 transition">
-Clear Chat
-</button>
-</div>
+        <div class="flex justify-between items-center px-6 py-4 border-b border-gray-800">
+            <div class="flex items-center gap-3">
+                <div class="avatar">🤖</div>
+                <div class="font-semibold">AI Study Assistant</div>
+            </div>
+            <button id="clearBtn" class="bg-red-500 px-4 py-1.5 text-sm rounded-lg hover:bg-red-600 transition">
+                Clear Chat
+            </button>
+        </div>
 
-<div id="chat" class="flex-1 overflow-y-auto p-8 space-y-6"></div>
+        <div id="chat" class="flex-1 overflow-y-auto p-8 space-y-6"></div>
 
-<div id="whiteboard" class="hidden px-8 pb-4">
-<div class="glass p-5 rounded-xl mt-4">
-<div class="text-sm text-blue-400 mb-3 font-semibold">
-🧑‍🏫 Whiteboard Solver (Step-by-Step)
-</div>
-<div id="boardSteps" class="space-y-3"></div>
-</div>
-</div>
+        <div id="thinkingBoard" class="hidden absolute top-20 left-10 right-10 z-30">
+            <div class="glass p-6 rounded-2xl shadow-2xl border-purple-500/40 bg-slate-900/95">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-purple-400 font-bold text-sm tracking-widest">THINKING VISUALIZER</span>
+                    <button onclick="closeThinking()" class="text-gray-400 hover:text-white">✕</button>
+                </div>
+                <div id="thinkingContent" class="flex flex-wrap items-center justify-center gap-3"></div>
+            </div>
+        </div>
 
-<!-- ✅ MODES + AUDIO -->
-<div class="flex gap-2 px-6 mt-3 items-center flex-wrap">
-<button id="normalBtn" class="mode-btn px-3 py-1 text-xs bg-gray-700 rounded" onclick="setMode('normal')">⚪ Normal</button>
-<button id="simpleBtn" class="mode-btn px-3 py-1 text-xs bg-green-600 rounded" onclick="setMode('simple')">🟢 Simple</button>
-<button id="mediumBtn" class="mode-btn px-3 py-1 text-xs bg-yellow-500 rounded" onclick="setMode('medium')">🟡 Exam</button>
-<button id="deepBtn" class="mode-btn px-3 py-1 text-xs bg-red-600 rounded" onclick="setMode('deep')">🔴 Deep</button>
+        <div id="whiteboard" class="hidden px-8 pb-4">
+            <div class="glass p-5 rounded-xl mt-4">
+                <div class="text-sm text-blue-400 mb-3 font-semibold">🧑‍🏫 Whiteboard Solver (Step-by-Step)</div>
+                <div id="boardSteps" class="space-y-3"></div>
+            </div>
+        </div>
 
-<button class="px-3 py-1 text-xs bg-blue-600 rounded hover:bg-blue-700"
-onclick="solveWhiteboard()">🧠 Whiteboard Solve</button>
+        <div class="flex gap-2 px-6 mt-3 items-center flex-wrap">
+            <button id="normalBtn" class="mode-btn px-3 py-1 text-xs bg-gray-700 rounded" onclick="setMode('normal')">⚪ Normal</button>
+            <button id="simpleBtn" class="mode-btn px-3 py-1 text-xs bg-green-600 rounded" onclick="setMode('simple')">🟢 Simple</button>
+            <button id="mediumBtn" class="mode-btn px-3 py-1 text-xs bg-yellow-500 rounded" onclick="setMode('medium')">🟡 Exam</button>
+            <button id="deepBtn" class="mode-btn px-3 py-1 text-xs bg-red-600 rounded" onclick="setMode('deep')">🔴 Deep</button>
 
-<label class="flex items-center gap-2 text-xs ml-4 cursor-pointer">
-<input type="checkbox" id="audioToggle" class="accent-blue-500">
-🔊 Audio
-</label>
-</div>
+            <button class="px-3 py-1 text-xs bg-blue-600 rounded hover:bg-blue-700" onclick="solveWhiteboard()">🧠 Whiteboard Solve</button>
+            <button class="px-3 py-1 text-xs bg-purple-600 rounded hover:bg-purple-700" onclick="showThinking()">📊 Visualize Logic</button>
 
-<div class="p-6 border-t border-gray-800">
-<div class="inputbox glow rounded-xl flex items-center gap-4 px-5 py-4">
-<textarea id="question" rows="1"
-placeholder="Ask anything about your studies..."
-class="flex-1 bg-transparent outline-none resize-none text-sm"></textarea>
+            <label class="flex items-center gap-2 text-xs ml-4 cursor-pointer">
+                <input type="checkbox" id="audioToggle" class="accent-blue-500"> 🔊 Audio
+            </label>
+        </div>
 
-<button id="sendBtn"
-class="sendbtn px-6 py-2 rounded-lg text-sm font-semibold">
-Send 🚀
-</button>
-</div>
-</div>
+        <div class="p-6 border-t border-gray-800">
+            <div class="inputbox glow rounded-xl flex items-center gap-4 px-5 py-4">
+                <textarea id="question" rows="1" placeholder="Ask anything about your studies..." class="flex-1 bg-transparent outline-none resize-none text-sm"></textarea>
+                <button id="sendBtn" class="sendbtn px-6 py-2 rounded-lg text-sm font-semibold">Send 🚀</button>
+            </div>
+        </div>
 
-</div>
+    </div>
 
-<script>
+    <script>
+        const chat = document.getElementById("chat")
+        const input = document.getElementById("question")
+        const sendBtn = document.getElementById("sendBtn")
+        const clearBtn = document.getElementById("clearBtn")
 
-const chat=document.getElementById("chat")
-const input=document.getElementById("question")
-const sendBtn=document.getElementById("sendBtn")
-const clearBtn=document.getElementById("clearBtn")
+        let currentMode = "normal"
+        let lastAnswer = "" 
 
-let currentMode="normal"
+        window.setMode = function (mode) {
+            currentMode = mode
+            document.querySelectorAll(".mode-btn").forEach(btn => {
+                btn.style.opacity = "0.5"
+                btn.style.transform = "scale(1)"
+            })
+            const active = document.getElementById(mode + "Btn")
+            if (active) {
+                active.style.opacity = "1"
+                active.style.transform = "scale(1.1)"
+            }
+        }
 
-window.setMode=function(mode){
-currentMode=mode
-document.querySelectorAll(".mode-btn").forEach(btn=>{
-btn.style.opacity="0.5"
-btn.style.transform="scale(1)"
-})
-const active=document.getElementById(mode+"Btn")
-if(active){
-active.style.opacity="1"
-active.style.transform="scale(1.1)"
-}
-}
+        function scrollBottom() { chat.scrollTop = chat.scrollHeight }
+        function copyText(text) { navigator.clipboard.writeText(text) }
 
-function scrollBottom(){chat.scrollTop=chat.scrollHeight}
-function copyText(text){navigator.clipboard.writeText(text)}
+        function addMessage(text, sender, typing = false) {
+            const msg = document.createElement("div")
+            msg.className = `message flex ${sender === "user" ? "justify-end" : ""}`
 
-function addMessage(text,sender,typing=false){
-const msg=document.createElement("div")
-msg.className=`message flex ${sender==="user"?"justify-end":""}`
-
-if(typing){
-msg.innerHTML=`<div class="flex gap-3">
+            if (typing) {
+                msg.innerHTML = `<div class="flex gap-3">
 <div class="avatar">🤖</div>
 <div>
 <div class="text-xs text-gray-400 mb-1">AI thinking...</div>
 <div class="bubble ai">
 <div class="typing"><span></span><span></span><span></span></div>
 </div></div></div>`
-}else{
-let bubble=sender==="user"?"user":"ai"
-let content=sender==="ai"?marked.parse(text):text
-msg.innerHTML=`<div class="bubble ${bubble}">
-<div class="tools" onclick="copyText(\`${text}\`)">📋</div>
+            } else {
+                let bubble = sender === "user" ? "user" : "ai"
+                let content = sender === "ai" ? marked.parse(text) : text
+                msg.innerHTML = `<div class="bubble ${bubble}">
+<div class="tools" onclick="copyText(\`${text.replace(/`/g, '\\`')}\`)">📋</div>
 ${content}</div>`
-}
+            }
 
-chat.appendChild(msg)
-document.querySelectorAll("pre code").forEach(block=>hljs.highlightElement(block))
-scrollBottom()
-return msg
-}
+            chat.appendChild(msg)
+            document.querySelectorAll("pre code").forEach(block => hljs.highlightElement(block))
+            scrollBottom()
+            return msg
+        }
 
-/* ✅ UPDATED WITH AUDIO */
+        async function sendQuestion() {
+            const question = input.value.trim()
+            if (!question) return
 
-async function sendQuestion(){
+            addMessage(question, "user")
+            input.value = ""; 
 
-const question=input.value.trim()
-if(!question)return
+            const typingMsg = addMessage("", "ai", true)
+            sendBtn.disabled = true
 
-addMessage(question,"user")
-input.value=""
+            try {
+                let url = "/ask"
+                if (currentMode !== "normal") { url = "/multi-explain" }
+                const res = await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ question, audio: document.getElementById("audioToggle").checked })
+                })
+                const data = await res.json()
+                
+                // Map the correct answer based on mode
+                let answer = data[currentMode] || data.answer || "Error: No answer returned.";
+                let audioFile = data[`${currentMode}_audio`] || data.audio;
+                
+                // CRITICAL: Update global lastAnswer so visualizer can see it
+                lastAnswer = answer; 
 
-const typingMsg=addMessage("", "ai", true)
-sendBtn.disabled=true
-
-try{
-
-let url="/ask"
-if(currentMode!=="normal"){url="/multi-explain"}
-
-const enableAudio=document.getElementById("audioToggle").checked
-
-const res=await fetch(url,{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({question,audio:enableAudio})
-})
-
-const data=await res.json()
-
-let answer=""
-let label=""
-let audioFile=null
-
-if(currentMode==="simple"){
-answer=data.simple
-label="🟢 Simple Explanation"
-audioFile=data.simple_audio
-}
-else if(currentMode==="medium"){
-answer=data.medium
-label="🟡 Exam Ready Answer"
-audioFile=data.medium_audio
-}
-else if(currentMode==="deep"){
-answer=data.deep
-label="🔴 Deep Technical Explanation"
-audioFile=data.deep_audio
-}
-else{
-answer=data.answer
-label="⚪ Normal Answer"
-audioFile=data.audio
-}
-
-typingMsg.innerHTML=`<div class="flex gap-3">
+                typingMsg.innerHTML = `<div class="flex gap-3">
 <div class="avatar">🤖</div>
 <div class="bubble ai">
-
-<div class="text-xs text-blue-400 mb-2 font-semibold">
-${label}
-</div>
-
-<div class="tools" onclick="copyText(\`${answer}\`)">📋</div>
-
+<div class="text-xs text-blue-400 mb-2 font-semibold uppercase">${currentMode} Answer</div>
 ${marked.parse(answer)}
-
-${audioFile ? `
-<audio controls autoplay>
-<source src="${audioFile}" type="audio/mpeg">
-</audio>` : ""}
-
-<br><span class="text-xs text-gray-400">⏱ ${data.time}s</span>
-
+${audioFile ? `<audio controls autoplay><source src="${audioFile}" type="audio/mpeg"></audio>` : ""}
 </div></div>`
+            } catch (e) { typingMsg.innerHTML = `<div class="bubble bg-red-600">Server Error</div>` }
+            sendBtn.disabled = false
+        }
 
-}catch(e){
-typingMsg.innerHTML=`<div class="bubble bg-red-600">Server Error</div>`
-}
+        function showThinking() {
+            if (!lastAnswer) { alert("Ask a question first!"); return; }
+            const nodes = window.generateThinking();
+            const container = document.getElementById("thinkingContent");
+            container.innerHTML = "";
+            nodes.forEach((n, i) => {
+                const node = document.createElement("div");
+                node.className = "thinking-node";
+                node.innerText = n;
+                container.appendChild(node);
+                if (i < nodes.length - 1) {
+                    const arrow = document.createElement("span");
+                    arrow.className = "thinking-arrow";
+                    arrow.innerText = "→";
+                    container.appendChild(arrow);
+                }
+            });
+            document.getElementById("thinkingBoard").classList.remove("hidden");
+        }
 
-sendBtn.disabled=false
-}
+        function closeThinking() { document.getElementById("thinkingBoard").classList.add("hidden"); }
 
-/* WHITEBOARD SAME */
+        async function solveWhiteboard() {
+            const question = input.value.trim() || "Last context"
+            document.getElementById("whiteboard").classList.remove("hidden")
+            const board = document.getElementById("boardSteps")
+            board.innerHTML = "Solving..."
+            try {
+                const res = await fetch("/solve-whiteboard", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ question })
+                })
+                const data = await res.json()
+                board.innerHTML = ""
+                let i = 0
+                function draw() {
+                    if (i < data.steps.length) {
+                        const div = document.createElement("div"); div.className = "whiteboard-line";
+                        div.innerText = data.steps[i++]; board.appendChild(div);
+                        setTimeout(draw, 700)
+                    }
+                }
+                draw()
+            } catch (e) { board.innerHTML = "Server Error" }
+        }
 
-async function solveWhiteboard(){
-const question=input.value.trim()
-if(!question)return
-
-document.getElementById("whiteboard").classList.remove("hidden")
-const board=document.getElementById("boardSteps")
-
-board.innerHTML="Solving..."
-
-try{
-const res=await fetch("/solve-whiteboard",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({question})
-})
-
-const data=await res.json()
-board.innerHTML=""
-
-if(data.error){
-board.innerHTML=data.error
-return
-}
-
-let i=0
-function draw(){
-if(i<data.steps.length){
-const div=document.createElement("div")
-div.className="whiteboard-line"
-div.innerText=data.steps[i]
-board.appendChild(div)
-i++
-setTimeout(draw,700)
-}}
-draw()
-
-}catch(e){
-board.innerHTML="Server Error"
-}
-}
-
-sendBtn.onclick=sendQuestion
-
-input.addEventListener("keydown",(e)=>{
-if(e.key==="Enter"&&!e.shiftKey){
-e.preventDefault()
-sendQuestion()
-}
-})
-
-clearBtn.onclick=()=>{chat.innerHTML=""}
-
-input.addEventListener("input",()=>{
-input.style.height="auto"
-input.style.height=input.scrollHeight+"px"
-})
-
-input.focus()
-
-</script>
-
+        sendBtn.onclick = sendQuestion
+        input.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendQuestion(); }})
+        clearBtn.onclick = () => { chat.innerHTML = ""; lastAnswer = ""; closeThinking(); }
+    </script>
 </body>
 </html>
